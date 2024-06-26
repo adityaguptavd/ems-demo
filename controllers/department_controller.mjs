@@ -5,7 +5,7 @@ import Admin from "../db/models/Admin.mjs";
 import Department from "../db/models/Department.mjs";
 import Employee from "../db/models/Employee.mjs";
 import { isValidObjectId } from "mongoose";
-import moment from "moment-timezone";
+import moment from "moment";
 
 export const createDepartment = [
   // validation rules
@@ -14,22 +14,22 @@ export const createDepartment = [
     .exists()
     .isString()
     .withMessage("Invalid Department Description"),
-  // body("openTime").custom((value) => {
-  //   if (value) {
-  //     if (/^([0-1][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$/.test(value)) {
-  //       return true;
-  //     }
-  //   }
-  //   throw new Error("Invalid Open Time");
-  // }),
-  // body("closeTime").custom((value) => {
-  //   if (value) {
-  //     if (/^([0-1][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$/.test(value)) {
-  //       return true;
-  //     }
-  //   }
-  //   throw new Error("Invalid Close Time");
-  // }),
+  body("openTime").custom((value) => {     
+    if (value) {
+      if (/^([0-1][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$/.test(value)) {
+        return true;
+      }
+    }
+    throw new Error("Invalid Open Time");
+  }),
+  body("closeTime").custom((value) => {
+    if (value) {
+      if (/^([0-1][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$/.test(value)) {
+        return true;
+      }
+    }
+    throw new Error("Invalid Close Time");
+  }),
   validateErrors,
   fetchCredentials,
   async (req, res) => {
@@ -47,8 +47,9 @@ export const createDepartment = [
         return res.status(409).json({ error: "Department Already Exists" });
       }
 
-      const open = openTime.toDate();
-      const close = closeTime.toDate();
+      // Convert open and close times to UTC
+      const open = moment(openTime, "HH:mm:ss").utc().toDate();
+      const close = moment(closeTime, "HH:mm:ss").utc().toDate();
 
       // Create new department
       const newDepartment = new Department({
@@ -73,14 +74,8 @@ export const fetchAllDepartments = [
     try {
       const admin = await Admin.findById(req.credential.id);
       if (!admin) {
-        const pseudoAdmin = await Employee.findById(req.credential.id)
-          .populate("department", "pseudoAdmin")
-          .exec();
-        if (
-          !pseudoAdmin ||
-          !pseudoAdmin.department ||
-          !pseudoAdmin.department.pseudoAdmin
-        ) {
+        const pseudoAdmin = await Employee.findById(req.credential.id).populate("department", "pseudoAdmin").exec();
+        if(!pseudoAdmin || !pseudoAdmin.department || !pseudoAdmin.department.pseudoAdmin){
           return res.status(403).json({ error: "Access Denied" });
         }
       }
@@ -152,7 +147,7 @@ export const updateDepartment = [
       existingDepartment.description = description;
       existingDepartment.open = moment(open);
       existingDepartment.close = moment(close);
-      if (pseudoAdmin !== undefined) {
+      if(pseudoAdmin !== undefined){
         existingDepartment.pseudoAdmin = pseudoAdmin;
       }
       await existingDepartment.save();
@@ -180,10 +175,7 @@ export const removeDepartment = [
       if (!removedDept) {
         return res.status(404).json({ error: "No such department found!" });
       }
-      await Employee.updateMany(
-        { department: removedDept._id },
-        { $unset: { department: "" } }
-      );
+      await Employee.updateMany({ department: removedDept._id }, {$unset: {department: ""}});
       return res.status(200).json({ message: "Department deleted" });
     } catch (error) {
       console.error(error);
