@@ -14,22 +14,22 @@ export const createDepartment = [
     .exists()
     .isString()
     .withMessage("Invalid Department Description"),
-  body("openTime").custom((value) => {     
-    if (value) {
-      if (/^([0-1][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$/.test(value)) {
-        return true;
-      }
-    }
-    throw new Error("Invalid Open Time");
-  }),
-  body("closeTime").custom((value) => {
-    if (value) {
-      if (/^([0-1][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$/.test(value)) {
-        return true;
-      }
-    }
-    throw new Error("Invalid Close Time");
-  }),
+  // body("openTime").custom((value) => {     
+  //   if (value) {
+  //     if (/^([0-1][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$/.test(value)) {
+  //       return true;
+  //     }
+  //   }
+  //   throw new Error("Invalid Open Time");
+  // }),
+  // body("closeTime").custom((value) => {
+  //   if (value) {
+  //     if (/^([0-1][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$/.test(value)) {
+  //       return true;
+  //     }
+  //   }
+  //   throw new Error("Invalid Close Time");
+  // }),
   validateErrors,
   fetchCredentials,
   async (req, res) => {
