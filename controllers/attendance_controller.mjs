@@ -88,7 +88,7 @@ export const uploadAttendance = [
           for (const row of rows) {
             try {
               // Find the employee in the database
-              const date = moment(row["Date"], "YYYY-MM-DD");
+              const date = moment(row["Date"], "YYYY-MM-DD").startOf("day");
               const employee = await Employee.findOne({
                 employeeId: row["Employee ID"],
               })
@@ -253,7 +253,7 @@ export const fetchAttendance = [
         const startDate = moment(
           `01/${paddedMonth}/${year}`,
           DATE_FORMAT
-        ).toDate();
+        ).startOf("day").toDate();
         const endDate = moment(startDate).endOf("month").toDate();
         attendance = await Attendance.find(
           {
@@ -397,7 +397,7 @@ export const addAttendance = [
         return res.status(403).json({ error: "Access Denied" });
       }
       const { status } = req.body;
-      const date = moment(req.body.date);
+      const date = moment(req.body.date).startOf("day");
       const { id } = req.params; // employee id
       if (!id || !isValidObjectId(id)) {
         return res.status(422).json({ error: "Invalid Employee ID" });
@@ -408,7 +408,7 @@ export const addAttendance = [
       }
       let attendance = await Attendance.findOne({
         employee: employee._id,
-        date: moment(date),
+        date,
       });
       if (attendance) {
         return res
@@ -418,7 +418,7 @@ export const addAttendance = [
       attendance = new Attendance({
         employee: employee._id,
         status,
-        date: moment(date),
+        date: date,
         entryExitTime: [],
         daySalary: 0,
         perDaySalary: employee.salary.base / date.daysInMonth(),

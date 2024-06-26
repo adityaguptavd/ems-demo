@@ -323,7 +323,7 @@ export const fetchEmployeeById = [
         const startDate = moment(
           `01/${paddedMonth}/${year}`,
           DATE_FORMAT
-        ).toDate();
+        ).startOf("day").toDate();
         const endDate = moment(startDate).endOf("month").toDate();
 
       leaveSummary = await LeaveApplication.aggregate([
