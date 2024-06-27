@@ -397,6 +397,7 @@ export const addAttendance = [
         return res.status(403).json({ error: "Access Denied" });
       }
       const { status } = req.body;
+      console.log(req.body.date);
       const date = moment(req.body.date).startOf("day").toDate();
       console.log(date);
       const { id } = req.params; // employee id
