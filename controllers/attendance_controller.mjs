@@ -3,7 +3,7 @@ import multer from "multer";
 import csvToJson from "csvtojson";
 import Employee from "../db/models/Employee.mjs";
 import Admin from "../db/models/Admin.mjs";
-import moment from "moment";
+import moment from "moment-timezone";
 import { DATE_FORMAT } from "../constants/date_constants.mjs";
 import { isValidObjectId } from "mongoose";
 import LeaveApplication from "../db/models/LeaveApplication.mjs";
@@ -250,12 +250,13 @@ export const fetchAttendance = [
         if (paddedMonth < 10) {
           paddedMonth = `0${paddedMonth}`;
         }
-        const startDate = moment(
+        const startDate = moment.tz(
           `01/${paddedMonth}/${year}`,
-          DATE_FORMAT
+          DATE_FORMAT,
+          moment.tz.guess()
         ).startOf("day").local();
         const utcStartDate = moment(startDate).utc().toDate();
-        const endDate = moment(startDate).endOf("month").local();
+        const endDate = moment(startDate).endOf("month");
         const utcEndDate = moment(endDate).utc().toDate();
         console.log('utcstartdate', utcStartDate);
         console.log('utcenddate', utcEndDate);
