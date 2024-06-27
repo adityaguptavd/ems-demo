@@ -253,9 +253,9 @@ export const fetchAttendance = [
         const startDate = moment(
           `01/${paddedMonth}/${year}`,
           DATE_FORMAT
-        ).startOf("day");
+        ).startOf("day").local();
         const utcStartDate = moment(startDate).utc().toDate();
-        const endDate = moment(startDate).endOf("month");
+        const endDate = moment(startDate).endOf("month").local();
         const utcEndDate = moment(endDate).utc().toDate();
         console.log('utcstartdate', utcStartDate);
         console.log('utcenddate', utcEndDate);
