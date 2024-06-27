@@ -3,7 +3,7 @@ import multer from "multer";
 import csvToJson from "csvtojson";
 import Employee from "../db/models/Employee.mjs";
 import Admin from "../db/models/Admin.mjs";
-import moment from "moment-timezone";
+import moment from "moment";
 import { DATE_FORMAT } from "../constants/date_constants.mjs";
 import { isValidObjectId } from "mongoose";
 import LeaveApplication from "../db/models/LeaveApplication.mjs";
@@ -88,7 +88,7 @@ export const uploadAttendance = [
           for (const row of rows) {
             try {
               // Find the employee in the database
-              const date = moment(row["Date"], "YYYY-MM-DD").startOf("day").utc().toDate();
+              const date = moment(row["Date"], "YYYY-MM-DD").startOf("day").toDate();
               const employee = await Employee.findOne({
                 employeeId: row["Employee ID"],
               })
@@ -250,24 +250,17 @@ export const fetchAttendance = [
         if (paddedMonth < 10) {
           paddedMonth = `0${paddedMonth}`;
         }
-        const startDate = moment.tz(
+        const startDate = moment(
           `01/${paddedMonth}/${year}`,
-          DATE_FORMAT,
-          moment.tz.guess()
-        ).startOf("day").local();
-        const utcStartDate = moment(startDate).utc().toDate();
-        const endDate = moment(startDate).endOf("month");
-        const utcEndDate = moment(endDate).utc().toDate();
-        console.log('utcstartdate', utcStartDate);
-        console.log('utcenddate', utcEndDate);
-        console.log('startdate', startDate);
-        console.log('enddate', endDate);
+          DATE_FORMAT
+        ).startOf("day").toDate();
+        const endDate = moment(startDate).endOf("month").toDate();
         attendance = await Attendance.find(
           {
             employee: employee._id,
             date: {
-              $gte: utcStartDate, // Start of the specified month
-              $lte: utcEndDate, // End of the specified month
+              $gte: startDate, // Start of the specified month
+              $lte: endDate, // End of the specified month
             },
           },
           "-employee"
@@ -275,8 +268,8 @@ export const fetchAttendance = [
         total = await Attendance.countDocuments({
           employee: employee._id,
           date: {
-            $gte: utcStartDate, // Start of the specified month
-            $lte: utcStartDate, // End of the specified month
+            $gte: startDate, // Start of the specified month
+            $lte: endDate, // End of the specified month
           },
         });
       }
@@ -404,7 +397,7 @@ export const addAttendance = [
         return res.status(403).json({ error: "Access Denied" });
       }
       const { status } = req.body;
-      const date = moment(req.body.date).startOf("day").utc().toDate();
+      const date = moment(req.body.date).startOf("day").toDate();
       const { id } = req.params; // employee id
       if (!id || !isValidObjectId(id)) {
         return res.status(422).json({ error: "Invalid Employee ID" });
