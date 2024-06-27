@@ -397,30 +397,7 @@ export const addAttendance = [
         return res.status(403).json({ error: "Access Denied" });
       }
       const { status } = req.body;
-      console.log(req.body.date);
-      let date = moment(req.body.date).startOf("day");
-      if (
-        moment(date)
-          .endOf("year")
-          .startOf("day")
-          .isSame(date, "day")
-      ) {
-        date.add(1, "year");
-        date.month(0);
-        date.date(1);
-      } else if (
-        moment(date)
-          .endOf("month")
-          .startOf("day")
-          .isSame(date, "day")
-      ) {
-        date.add(1, "month");
-        date.date(1);
-      } else {
-        date.add(1, "day");
-      }
-      date = date.toDate();
-      console.log(date);
+      const date = moment(req.body.date).toDate();
       const { id } = req.params; // employee id
       if (!id || !isValidObjectId(id)) {
         return res.status(422).json({ error: "Invalid Employee ID" });

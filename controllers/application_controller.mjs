@@ -104,12 +104,30 @@ export const uploadApplication = [
         }
       }
 
+      // Calculate the leave period with possible extensions
+      let leaveStartDate = moment(fromDate, DATE_FORMAT);
+      let leaveEndDate = moment(toDate, DATE_FORMAT);
+      let extended = false;
+      // Extend if startDate is Sunday (day 0)
+      if (leaveStartDate.day() === 0) {
+        extended = true;
+        leaveStartDate.subtract(2, "days"); // Subtract 2 days to include Friday
+      }
+
+      // Extend if endDate is Thursday (day 4)
+      if (leaveEndDate.day() === 4) {
+        extended = true;
+        leaveEndDate.add(1, "days"); // Add Friday
+        leaveEndDate.add(1, "days"); // Add Saturday
+      }
+
+
       if (isHR) {
         employee = await Employee.findById(employeeId);
         if (!employee) {
           return res.status(404).json({ error: "Applicant not found" });
         }
-        const updated = await updateAttendance(fromDate, toDate, employee, leaveType);
+        const updated = await updateAttendance(leaveStartDate, leaveEndDate, employee, leaveType, extended);
         if(!updated){
           return res.status(500).json({ error: "Something went wrong!" });
         }
@@ -119,8 +137,8 @@ export const uploadApplication = [
       const application = new LeaveApplication({
         employee: employee._id,
         leaveType,
-        fromDate: moment(fromDate, DATE_FORMAT).toDate(),
-        toDate: moment(toDate, DATE_FORMAT).toDate(),
+        fromDate: leaveStartDate.toDate(),
+        toDate: leaveEndDate.toDate(),
         reason,
         document: req.file
           ? Buffer.from(req.file.buffer).toString("base64")
@@ -172,7 +190,31 @@ export const approveLeave = [
       if (req.file) {
         leave.document = Buffer.from(req.file.buffer).toString("base64");
       }
-      const updated = await updateAttendance(leave.fromDate, leave.toDate, leave.employee, leave.leaveType);
+
+      // Calculate the leave period with possible extensions
+      let leaveStartDate = moment(leave.fromDate);
+      let leaveEndDate = moment(leave.toDate);
+      let extended = false;
+      // Extend if startDate is Sunday (day 0)
+      if (leaveStartDate.day() === 0) {
+        extended = true;
+        leaveStartDate.subtract(2, "days"); // Subtract 2 days to include Friday
+        leaveStartDate.subtract(1, "days");
+        leaveStartDate.add(1, "days"); // Subtract 1 more day to include Saturday
+      }
+
+      // Extend if endDate is Thursday (day 4)
+      if (leaveEndDate.day() === 4) {
+        extended = true;
+        leaveEndDate.add(1, "days"); // Add Friday
+        leaveEndDate.add(1, "days"); // Add Saturday
+      }
+      // console.log(leaveStartDate)
+      // console.log(leaveEndDate)
+      leaveStartDate.add(1, "days");
+      leaveEndDate.add(1, "days");
+
+      const updated = await updateAttendance(leaveStartDate, leaveEndDate, leave.employee, leave.leaveType, extended);
         if(!updated){
           return res.status(500).json({ error: "Something went wrong!" });
         }

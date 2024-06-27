@@ -298,13 +298,54 @@ export const fetchEmployeeById = [
   fetchCredentials,
   async (req, res) => {
     // check if detail is requested by employee
-    const { id: employeeId, year, month } = req.params;
+    const { id: employeeId } = req.params;
     if (!isValidObjectId(employeeId)) {
       return res.status(422).json({ error: "Invalid Employee ID" });
     }
     let user = await Admin.findById(employeeId, "-password -__v");
     if (!user) {
       user = await Employee.findById(employeeId, "-password -__v")
+        .populate("department", "name pseudoAdmin")
+        .exec();
+      if (!user) {
+        return res.status(404).json({ error: "No employee found!" });
+      }
+    }
+
+    // check if employee is requesting his own deatils
+    if (employeeId === req.credential.id) {
+      return res.status(200).json({ user });
+    }
+
+    // check if admin is requesting details
+    const admin = await Admin.findById(req.credential.id);
+    if (!admin) {
+      const pseudoAdmin = await Employee.findById(req.credential.id)
+        .populate("department", "pseudoAdmin")
+        .exec();
+      if (
+        !pseudoAdmin ||
+        !pseudoAdmin.department ||
+        !pseudoAdmin.department.pseudoAdmin
+      ) {
+        return res.status(403).json({ error: "Access Denied" });
+      }
+    }
+    return res.status(200).json({ user });
+  },
+];
+
+export const fetchEmployeeSummaryById = [
+  fetchCredentials,
+  async (req, res) => {
+    // check if detail is requested by employee
+    const { id: employeeId, year, month } = req.params;
+    if (!isValidObjectId(employeeId)) {
+      return res.status(422).json({ error: "Invalid Employee ID" });
+    }
+    let user = await Admin.findById(employeeId, "-password -__v");
+    if (!user) {
+      user = await Employee.findById(employeeId, "salary")
         .populate("department", "name pseudoAdmin")
         .exec();
       if (!user) {
@@ -326,7 +367,7 @@ export const fetchEmployeeById = [
         ).startOf("day").toDate();
         const endDate = moment(startDate).endOf("month").toDate();
 
-      leaveSummary = await LeaveApplication.aggregate([
+      leaveSummary = await Attendance.aggregate([
         {
           $match: {
             employee: user._id,
@@ -334,6 +375,9 @@ export const fetchEmployeeById = [
               $gte: startDate, // Start of the specified month
               $lte: endDate, // End of the specified month
             },
+            status: {
+              $in: ["Medical Leave", "Casual Leave"],
+            }
           },
         },
         {
@@ -664,6 +708,7 @@ export const removeEmployee = [
       if (!employee) {
         return res.status(404).json({ error: "Employee not found" });
       }
+      await Attendance.deleteMany({ employee: employeeId });
       await LeaveApplication.deleteMany({ employee: employeeId });
       await Notifications.deleteMany({
         $or: [{ to: employeeId }, { "payload.employee": employeeId }],
