@@ -88,7 +88,7 @@ export const uploadAttendance = [
           for (const row of rows) {
             try {
               // Find the employee in the database
-              const date = moment(row["Date"], "YYYY-MM-DD").startOf("day");
+              const date = moment(row["Date"], "YYYY-MM-DD").startOf("day").utc().toDate();
               const employee = await Employee.findOne({
                 employeeId: row["Employee ID"],
               })
@@ -109,7 +109,7 @@ export const uploadAttendance = [
                   let deducted;
                   let entryExitTime = [];
                   const oneDaySalary =
-                    employee.salary.base / date.daysInMonth();
+                    employee.salary.base / moment(row["Date"], "YYYY-MM-DD").startOf("day").daysInMonth();
                   if (
                     !row["Times"] ||
                     row["Times"] === 0 ||
@@ -253,8 +253,8 @@ export const fetchAttendance = [
         const startDate = moment(
           `01/${paddedMonth}/${year}`,
           DATE_FORMAT
-        ).startOf("day").toDate();
-        const endDate = moment(startDate).endOf("month").toDate();
+        ).startOf("day").utc().toDate();
+        const endDate = moment(startDate).endOf("month").utc().toDate();
         attendance = await Attendance.find(
           {
             employee: employee._id,
@@ -397,7 +397,7 @@ export const addAttendance = [
         return res.status(403).json({ error: "Access Denied" });
       }
       const { status } = req.body;
-      const date = moment(req.body.date).startOf("day");
+      const date = moment(req.body.date).startOf("day").utc().toDate();
       const { id } = req.params; // employee id
       if (!id || !isValidObjectId(id)) {
         return res.status(422).json({ error: "Invalid Employee ID" });
@@ -415,13 +415,14 @@ export const addAttendance = [
           .status(409)
           .json({ error: "Attendance is already uploaded" });
       }
+      const daysInMonth = moment(req.body.date).startOf("day").daysInMonth();
       attendance = new Attendance({
         employee: employee._id,
         status,
-        date: date,
+        date,
         entryExitTime: [],
         daySalary: 0,
-        perDaySalary: employee.salary.base / date.daysInMonth(),
+        perDaySalary: employee.salary.base / daysInMonth,
         deducted: 0,
       });
       const paidStatus = ["Present", "Medical Leave", "Holiday"];
