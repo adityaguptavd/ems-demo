@@ -253,16 +253,20 @@ export const fetchAttendance = [
         const startDate = moment(
           `01/${paddedMonth}/${year}`,
           DATE_FORMAT
-        ).startOf("day").utc().toDate();
-        const endDate = moment(startDate).endOf("month").utc().toDate();
-        console.log('attendance', startDate);
-        console.log('attendance', endDate);
+        ).startOf("day");
+        const utcStartDate = moment(startDate).utc().toDate();
+        const endDate = moment(startDate).endOf("month");
+        const utcEndDate = moment(endDate).utc().toDate();
+        console.log('utcstartdate', utcStartDate);
+        console.log('utcenddate', utcEndDate);
+        console.log('startdate', startDate);
+        console.log('enddate', endDate);
         attendance = await Attendance.find(
           {
             employee: employee._id,
             date: {
-              $gte: startDate, // Start of the specified month
-              $lte: endDate, // End of the specified month
+              $gte: utcStartDate, // Start of the specified month
+              $lte: utcEndDate, // End of the specified month
             },
           },
           "-employee"
@@ -270,8 +274,8 @@ export const fetchAttendance = [
         total = await Attendance.countDocuments({
           employee: employee._id,
           date: {
-            $gte: startDate, // Start of the specified month
-            $lte: endDate, // End of the specified month
+            $gte: utcStartDate, // Start of the specified month
+            $lte: utcStartDate, // End of the specified month
           },
         });
       }
