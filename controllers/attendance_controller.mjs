@@ -398,6 +398,7 @@ export const addAttendance = [
       }
       const { status } = req.body;
       const date = moment(req.body.date).startOf("day").toDate();
+      console.log(date);
       const { id } = req.params; // employee id
       if (!id || !isValidObjectId(id)) {
         return res.status(422).json({ error: "Invalid Employee ID" });
