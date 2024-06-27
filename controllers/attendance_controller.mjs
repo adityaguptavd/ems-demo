@@ -403,7 +403,7 @@ export const addAttendance = [
         moment(date)
           .endOf("year")
           .startOf("day")
-          .isSame(currentDate, "day")
+          .isSame(date, "day")
       ) {
         date.add(1, "year");
         date.month(0);
