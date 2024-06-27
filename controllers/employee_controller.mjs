@@ -325,6 +325,8 @@ export const fetchEmployeeById = [
           DATE_FORMAT
         ).startOf("day").utc().toDate();
         const endDate = moment(startDate).endOf("month").utc().toDate();
+        console.log('employee', startDate);
+        console.log('employee', endDate);
 
       leaveSummary = await LeaveApplication.aggregate([
         {

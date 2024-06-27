@@ -255,6 +255,8 @@ export const fetchAttendance = [
           DATE_FORMAT
         ).startOf("day").utc().toDate();
         const endDate = moment(startDate).endOf("month").utc().toDate();
+        console.log('attendance', startDate);
+        console.log('attendance', endDate);
         attendance = await Attendance.find(
           {
             employee: employee._id,
