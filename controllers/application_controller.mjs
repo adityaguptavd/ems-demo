@@ -110,17 +110,18 @@ export const uploadApplication = [
       let extended = false;
       // Extend if startDate is Sunday (day 0)
       if (leaveStartDate.day() === 0) {
+        console.log('sunday');
         extended = true;
         leaveStartDate.subtract(2, "days"); // Subtract 2 days to include Friday
       }
 
       // Extend if endDate is Thursday (day 4)
       if (leaveEndDate.day() === 4) {
+        console.log('thursday');
         extended = true;
         leaveEndDate.add(1, "days"); // Add Friday
         leaveEndDate.add(1, "days"); // Add Saturday
       }
-
 
       if (isHR) {
         employee = await Employee.findById(employeeId);
@@ -192,15 +193,13 @@ export const approveLeave = [
       }
 
       // Calculate the leave period with possible extensions
-      let leaveStartDate = moment(leave.fromDate);
-      let leaveEndDate = moment(leave.toDate);
+      let leaveStartDate = moment(leave.fromDate, DATE_FORMAT);
+      let leaveEndDate = moment(leave.toDate, DATE_FORMAT);
       let extended = false;
       // Extend if startDate is Sunday (day 0)
       if (leaveStartDate.day() === 0) {
         extended = true;
         leaveStartDate.subtract(2, "days"); // Subtract 2 days to include Friday
-        leaveStartDate.subtract(1, "days");
-        leaveStartDate.add(1, "days"); // Subtract 1 more day to include Saturday
       }
 
       // Extend if endDate is Thursday (day 4)
@@ -209,17 +208,13 @@ export const approveLeave = [
         leaveEndDate.add(1, "days"); // Add Friday
         leaveEndDate.add(1, "days"); // Add Saturday
       }
-      // console.log(leaveStartDate)
-      // console.log(leaveEndDate)
-      leaveStartDate.add(1, "days");
-      leaveEndDate.add(1, "days");
 
+      // update attendance
       const updated = await updateAttendance(leaveStartDate, leaveEndDate, leave.employee, leave.leaveType, extended);
         if(!updated){
           return res.status(500).json({ error: "Something went wrong!" });
         }
       await leave.save();
-      // update attendance
       // create notification for the employee
       const notification = new Notification({
         to: leave.employee ? leave.employee._id : null,

@@ -367,17 +367,14 @@ export const fetchEmployeeSummaryById = [
         ).startOf("day").toDate();
         const endDate = moment(startDate).endOf("month").toDate();
 
-      leaveSummary = await Attendance.aggregate([
+      leaveSummary = await LeaveApplication.aggregate([
         {
           $match: {
             employee: user._id,
-            date: {
+            fromDate: {
               $gte: startDate, // Start of the specified month
               $lte: endDate, // End of the specified month
             },
-            status: {
-              $in: ["Medical Leave", "Casual Leave"],
-            }
           },
         },
         {
@@ -712,10 +709,6 @@ export const removeEmployee = [
       await LeaveApplication.deleteMany({ employee: employeeId });
       await Notifications.deleteMany({
         $or: [{ to: employeeId }, { "payload.employee": employeeId }],
-      });
-      // cancel all scheduled notifications
-      employee.documents.forEach((doc) => {
-        cancelNotification(`${doc.documentType}^${employeeId}`);
       });
       const removedEmployee = await Employee.findOneAndDelete({
         _id: employeeId,

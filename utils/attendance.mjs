@@ -12,8 +12,8 @@ export const updateAttendance = async (
 ) => {
   try {
     const dateArray = [];
-    const currentDate = fromDate;
-    const lastDate = toDate;
+    const currentDate = fromDate.clone();
+    const lastDate = toDate.clone();
 
     while (currentDate <= lastDate) {
       dateArray.push(currentDate.toDate());
